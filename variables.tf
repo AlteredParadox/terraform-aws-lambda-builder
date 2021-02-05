@@ -159,6 +159,12 @@ variable "memory_size" {
   default     = null
 }
 
+variable "output_dir" {
+  description = "Local directory for the filename to be stored."
+  type        = string
+  default     = ""
+}
+
 variable "publish" {
   description = "Whether to publish creation/change as new Lambda Function Version."
   type        = bool
