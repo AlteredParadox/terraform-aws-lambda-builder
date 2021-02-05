@@ -183,6 +183,7 @@ in the master branch, so don't bother manually changing them.
 | enabled | Create resources. | `bool` | `true` | no |
 | lambda\_builder\_memory\_size | Memory size for the builder Lambda function. | `number` | `512` | no |
 | lambda\_builder\_timeout | Timeout for the builder Lambda function. | `number` | `900` | no |
+| output_dir | Local directory for the FILENAME output file to be stored. | `string` | "" | no |
 | role\_cloudwatch\_logs | If `role` is not provided, one will be created with a policy that enables CloudWatch Logs. | `bool` | `false` | no |
 | role\_custom\_policies | If `role` is not provided, one will be created with these JSON policies attached. | `list(string)` | `[]` | no |
 | role\_policy\_arns | If `role` is not provided, one will be created with these policy ARNs attached. | `list(string)` | `[]` | no |
