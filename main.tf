@@ -35,13 +35,29 @@ data "aws_region" "current" {
   count = var.enabled && var.build_mode != "DISABLED" ? 1 : 0
 }
 
+resource "null_resource" "dir" {
+  count = var.enabled && var.build_mode == "FILENAME" && length(var.output_dir) > 0 ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "[ -d ${var.output_dir} ] || mkdir ${var.output_dir}"
+  }
+}
+
+locals {
+  full_filename      = var.enabled && var.build_mode == "FILENAME" && length(var.output_dir) > 0 ? "${var.output_dir}/${var.filename}" : var.filename
+  region_account     = "${data.aws_region.current[0].name}-${data.aws_caller_identity.current[0].account_id}"
+  zip_file_name      = "${data.aws_partition.current[0].partition}-${local.region_account}-${var.function_name}"
+  full_zip_path      = var.enabled && var.build_mode != "DISABLED" ? "${path.module}/zip_files/${local.zip_file_name}.zip" : ""
+}
+
 module "source_zip_file" {
-  source = "github.com/alteredparadox/terraform-archive-stable?ref=master"
+  source     = "github.com/alteredparadox/terraform-archive-stable?ref=master"
+  depends_on = [null_resource.dir[0]]
 
   enabled = var.enabled && var.build_mode != "DISABLED"
 
   empty_dirs  = var.empty_dirs
-  output_path = var.enabled && var.build_mode == "FILENAME" ? var.filename : var.enabled && var.build_mode != "DISABLED" ? "${path.module}/zip_files/${data.aws_partition.current[0].partition}-${data.aws_region.current[0].name}-${data.aws_caller_identity.current[0].account_id}-${var.function_name}.zip" : ""
+  output_path = var.enabled && var.build_mode == "FILENAME" ? local.full_filename : local.full_zip_path
   source_dir  = var.source_dir
 }
 
@@ -178,10 +194,11 @@ module "role" {
 ##############################
 
 resource "aws_lambda_function" "built" {
-  count = var.enabled ? 1 : 0
+  count      = var.enabled ? 1 : 0
+  depends_on = [null_resource.dir[0]]
 
   description                    = var.description
-  filename                       = var.filename
+  filename                       = local.full_filename
   function_name                  = var.function_name
   handler                        = var.handler
   kms_key_arn                    = var.kms_key_arn
